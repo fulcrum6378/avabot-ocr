@@ -16,7 +16,6 @@ root = os.path.dirname(__file__)
 image: Image = None
 post_get = "p"
 is_adobe_rgb = lambda img: 'Adobe RGB' in img.info.get('icc_profile', '')
-colourType = AdobeRGBColor if is_adobe_rgb(image) else sRGBColor
 
 if len(argv[1:]) > 0:
     image = Image.open(os.path.join(root, argv[1]))
@@ -29,6 +28,7 @@ else:
     if got[post_get] == "":
         raise Exception("Did not receive any data!")
     image = Image.open(BytesIO(base64.b64decode(got[post_get])))
+colourType = AdobeRGBColor if is_adobe_rgb(image) else sRGBColor
 
 
 def lab(col: Sequence):
@@ -44,9 +44,10 @@ for x in range(len(data)):
         cLab = lab(cell)
         dif = 0
 
-        if x > 0: dif += delta_e_cmc(lab(data[x - 1][y]), cLab) * 0.05  # Vertical Comparison
-        if y > 0: dif += delta_e_cmc(lab(data[x][y - 1]), cLab) * 0.05  # Horizontal Comparison
+        if x > 0: dif += delta_e_cmc(lab(data[x - 1][y]), cLab)  # Vertical Comparison
+        if y > 0: dif += delta_e_cmc(lab(data[x][y - 1]), cLab)  # Horizontal Comparison
 
+        if dif < 10: dif = 0
         if dif > 100: dif = 100
         res = [2.55 * dif, 2.55 * dif, 2.55 * dif]
         xAnal = np.array(res, ndmin=2) if xAnal is None else np.append(xAnal, [res], axis=0)
